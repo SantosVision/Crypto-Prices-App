@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'coin_data.dart';
+import 'package:bitcoin_ticker/coin_data.dart';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -7,9 +7,10 @@ class PriceScreen extends StatefulWidget {
 }
 
 class _PriceScreenState extends State<PriceScreen> {
+  CoinData coinData = CoinData();
   String selectedCurrency = 'USD';
 
-  List<DropdownMenuItem> getDropdownItems() {
+  DropdownButton getDropdownItems() {
     List<DropdownMenuItem<String>> dropdownItems = [];
 
     for (String currency in currenciesList) {
@@ -19,7 +20,51 @@ class _PriceScreenState extends State<PriceScreen> {
       );
       dropdownItems.add(newItem);
     }
-    return dropdownItems;
+    return DropdownButton<dynamic>(
+      value: selectedCurrency,
+      items: dropdownItems,
+      onChanged: (value) {
+        setState(() {
+          selectedCurrency = value;
+          getCurrentPrice();
+          getEthPrice();
+          getLitePrice();
+        });
+      },
+    );
+  }
+
+  String currentPrice = '?';
+  String currentEthPrice = '?';
+  String currentLtcPrice = '?';
+
+  void getCurrentPrice() async {
+    double coinPrice = await coinData.getBitcoinData(selectedCurrency);
+    setState(() {
+      currentPrice = coinPrice.toStringAsFixed(2);
+    });
+  }
+
+  void getEthPrice() async {
+    double coinPrice = await coinData.getEtherData(selectedCurrency);
+    setState(() {
+      currentEthPrice = coinPrice.toStringAsFixed(2);
+    });
+  }
+
+  void getLitePrice() async {
+    double coinPrice = await coinData.getLiteCoinData(selectedCurrency);
+    setState(() {
+      currentLtcPrice = coinPrice.toStringAsFixed(2);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getCurrentPrice();
+    getEthPrice();
+    getLitePrice();
   }
 
   @override
@@ -32,41 +77,31 @@ class _PriceScreenState extends State<PriceScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Padding(
-            padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
+          Column(
+            children: [
+              CoinCard(
+                currentPrice: currentPrice,
+                selectedCurrency: selectedCurrency,
+                crypto: 'BTC',
               ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = ? USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
+              CoinCard(
+                currentPrice: currentEthPrice,
+                selectedCurrency: selectedCurrency,
+                crypto: 'ETH',
               ),
-            ),
+              CoinCard(
+                currentPrice: currentLtcPrice,
+                selectedCurrency: selectedCurrency,
+                crypto: 'LTC',
+              ),
+            ],
           ),
           Container(
             height: 150.0,
             alignment: Alignment.center,
             padding: EdgeInsets.only(bottom: 30.0),
             color: Colors.lightBlue,
-            child: DropdownButton<dynamic>(
-              value: selectedCurrency,
-              items: getDropdownItems(),
-              onChanged: (value) {
-                setState(() {
-                  selectedCurrency = value;
-                });
-              },
-            ),
+            child: getDropdownItems(),
           ),
         ],
       ),
